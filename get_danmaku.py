@@ -1,6 +1,4 @@
 # -*- encoding: utf-8 -*-
-import socket
-import socks
 import requests
 import re
 import sys
@@ -8,18 +6,13 @@ import json
 import time
 import datetime
 
-aid='44625717' #这里是av号
-page=0 #一般我们说的“P数”“第几P”就是这个
+aid='44625717' #就是av号
+page=0 #我们一般说的“第xP”里的“x”就是这个值
 date_start='2019-02-25' #起止日期
-date_end='2019-02-28'
+date_end='2019-03-01'
 cookie_header={
-    'Cookie': #这里填上你的cookie，安全相关，别泄漏了
+    'Cookie': #填一个你的登录Cookie上去，隐私相关，注意不要泄露
     }
-
-def set_socks_proxy(host, port):
-    default_socket = socket.socket
-    socks.set_default_proxy(socks.SOCKS5, host, port)
-    socket.socket = socks.socksocket
 
 class bilibili:
     class video:
@@ -43,7 +36,7 @@ class bilibili:
 
                 entry_count = 0
                 for i in range(len(data)):
-                    data_split = data[i].split(',') #浮点日期转换成分钟和秒
+                    data_split = data[i].split(',') #浮点值秒数转整数的分和秒
                     second = int(float(data_split[0]))
                     minute = int(second/60)
                     second %= 60
@@ -51,7 +44,7 @@ class bilibili:
                     mode = int(data_split[1])
                     size = int(data_split[2])
                     color = hex(int(data_split[3]))
-                    submit_time = time.localtime(int(data_split[4])) #Unix日期转换成一般格式
+                    submit_time = time.localtime(int(data_split[4])) #Unix格式时间转换成一般格式
                     pool = int(data_split[5])
                     coded_uid = data_split[6]
                     rowID = int(data_split[7])
@@ -90,17 +83,17 @@ if __name__=='__main__':
     date_start=datetime.date(*[int(i) for i in date_start.split('-')])
     date_end=datetime.date(*[int(i) for i in date_end.split('-')])
 
-    #print('Setting proxy...') #在需要的时候打开代理，有的校园网封b站qaq
-    #set_socks_proxy('127.0.0.1',1080)
     print('Getting cid...')
     cid = str(bilibili.video.get_cid(aid, page))
     print('Getting danmaku list...')
     all_danmaku = bilibili.video.danmaku.getall(date_start,date_end,cid,cookie_header)
+    print(len(all_danmaku),'in total from',str(date_start),'to',str(date_end))
+    all_danmaku.sort(key=lambda i:i['row'])
     print('Saving data...')
     with open('av'+aid+'_'+str(date_start)+' to '+str(date_end)+'.json','w',encoding='utf-8') as jfile:
         json.dump(all_danmaku, jfile,
             ensure_ascii=False,
-            sort_keys=True,
+            sort_keys=False,
             indent=2,
             separators=(',', ': ')
             )
